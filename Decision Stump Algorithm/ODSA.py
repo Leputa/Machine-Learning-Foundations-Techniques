@@ -71,8 +71,14 @@ class One_Dimensional_Decision_Stump_Algorithm():
 def main():
 	oddsa=One_Dimensional_Decision_Stump_Algorithm()
 	Ein,Eout=oddsa.calculateAverage()
+	print("**************************************************************************")
+	print("第17题答案如下：")
 	print("Ein:"+str(Ein))
+	print("**************************************************************************")
+	print()
+	print("**************************************************************************")
+	print("第18题答案如下：")
 	print("Eout:"+str(Eout))
-	
+	print("**************************************************************************")
 if __name__=='__main__':
 	main()
