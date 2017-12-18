@@ -50,6 +50,26 @@ class Regularized_Linear_Regression():
 				error+=1
 		return error/m
 
+	def slipDateSet(self,dataSet):
+		m=len(dataSet)
+		sp=int(m*0.6)
+		trainingSet=dataSet[:sp,:]
+		validationSet=dataSet[sp:,:]
+		return trainingSet,validationSet
+
+	def V_fold_cross_validation(self,dataSet,v,lamb):
+		m=len(dataSet)
+		Ecv=0
+		W=np.zeros(3)
+		for i in range(v):
+			self.w=np.zeros(3)
+			start=int(m*i/v)
+			end=int(m*(i+1)/v)
+			validationSet=dataSet[start:end,:]
+			trainingSet=np.concatenate((dataSet[:start,:],dataSet[end:,:]),axis=0)
+			self.iteration(trainingSet,lamb)
+			Ecv+=self.get0_1Error(validationSet)
+		return Ecv/5
 
 def main():
 	ridge_regression=Regularized_Linear_Regression()
@@ -102,6 +122,87 @@ def main():
 	print("**************************************************************************")
 	print()
 
+	trainingSet,validationSet=ridge_regression.slipDateSet(trainingSet)
+	min_Etrain16=10
+	Eval16=10
+	Eout16=10
+	Etrain17=10
+	min_Eval17=10
+	Eout17=10
+	lamb16=0
+	lamb17=0
+	tmpW=np.zeros(3)
+	for i in Lamb:
+		new_i=10**i
+		ridge_regression.w=np.zeros(3)
+		ridge_regression.iteration(trainingSet,new_i)
+		Etrain=ridge_regression.get0_1Error(trainingSet)
+		Eval=ridge_regression.get0_1Error(validationSet)
+		Eout=ridge_regression.get0_1Error(testingSet)
+		if(Etrain<=min_Etrain16):
+			min_Etrain16=Etrain
+			Eval16=Eval
+			Eout16=Eout
+			lamb16=i
+		if(Eval<=min_Eval17):
+			min_Eval17=Eval
+			Etrain17=Etrain
+			Eout17=Eout
+			lamb17=i
+
+
+	print("**************************************************************************")
+	print("第16题答案如下：")
+	print("log10(lambda):"+str(lamb16))
+	print('Etrain:'+str(min_Etrain16))
+	print('Eval:'+str(Eval16))
+	print('Eout:'+str(Eout16))
+	print("**************************************************************************")
+	print()
+	print("**************************************************************************")
+	print("第17题答案如下：")
+	print("log10(lambda):"+str(lamb17))
+	print('Etrain:'+str(Etrain17))
+	print('Eval:'+str(min_Eval17))
+	print('Eout:'+str(Eout17))
+	print("**************************************************************************")
+	print()
+
+	trainingSet=ridge_regression.file2matrix("hw4_train.dat")
+	ridge_regression.iteration(trainingSet,10**lamb17)
+	Ein=ridge_regression.get0_1Error(trainingSet)
+	Eout=ridge_regression.get0_1Error(testingSet)
+	print("**************************************************************************")
+	print("第18题答案如下：")
+	print ('Ein:'+str(Ein))
+	print ('Eout:'+str(Eout))
+	print("**************************************************************************")
+	print()	
+
+	min_Ecv=10
+	lamb19=0
+	for i in Lamb:
+		lamb=10**i
+		ave_Ecv=ridge_regression.V_fold_cross_validation(trainingSet,5,lamb)
+		if(ave_Ecv<=min_Ecv):
+			min_Ecv=ave_Ecv
+			lamb19=i
+	print("**************************************************************************")
+	print("第19题答案如下：")
+	print ("log10(lambda):"+str(lamb19))
+	print ('Ecv:'+str(min_Ecv))
+	print("**************************************************************************")
+	print()		
+
+	ridge_regression.iteration(trainingSet,10**lamb19)
+	Ein=ridge_regression.get0_1Error(trainingSet)
+	Eout=ridge_regression.get0_1Error(testingSet)
+	print("**************************************************************************")
+	print("第20题答案如下：")
+	print ('Ein:'+str(Ein))
+	print ('Eout:'+str(Eout))
+	print("**************************************************************************")
+	print()
 
 if __name__=="__main__":
 	main()
