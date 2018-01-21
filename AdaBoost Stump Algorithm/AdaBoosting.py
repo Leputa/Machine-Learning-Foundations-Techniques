@@ -88,9 +88,6 @@ class AdaBoost_Stump_Algorithm():
 				GError+=1
 		return GError/len(dataSet)
 
-
-
-
 	def print12(self,Ein):
 		print("**************************************************************************")
 		print("第12题答案如下：")
@@ -126,7 +123,6 @@ class AdaBoost_Stump_Algorithm():
 		print("**************************************************************************")
 		print()
 
-
 def main():
 	adaBoost=AdaBoost_Stump_Algorithm()
 	trainingSet,u=adaBoost.file2matrix('hw2_adaboost_train.dat')
@@ -150,8 +146,6 @@ def main():
 	print("Eout(G):"+str(EoutG))
 	print("**************************************************************************")
 	print()	
-
-
 
 if __name__=="__main__":
 	main()
