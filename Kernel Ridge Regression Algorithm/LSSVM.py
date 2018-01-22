@@ -53,7 +53,7 @@ class LSSVM:
 		error=0
 		for i in range(m):
 			kernelEval=self.kernerTrans(trainingSet,dataSet[i,:],gamma)
-			if (np.sign(np.array(kernelEval.T*belta)[0][0]))!=y[i]:
+			if np.sign(kernelEval.T*belta)!=y[i]:
 				error+=1
 		return error/m
 
