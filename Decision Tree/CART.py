@@ -69,6 +69,18 @@ class Decision_Tree():
 		binTree['right']=self.createTree(rightSet)
 		return binTree
 
+	def createPruneTree(self,trainingSet):
+		feature,s=self.chooseBestToSplit(trainingSet)
+		binTree={}
+		binTree['feature']=feature
+		binTree['value']=s
+		leftSet,rightSet=self.binSplitDataSet(trainingSet,feature,s)
+		left=np.sign(np.sum(leftSet[:,-1]))
+		right=np.sign(np.sum(rightSet[:,-1]))
+		binTree['left']=left
+		binTree['right']=right
+		return binTree
+
 	def calError(self,dataSet,dtree):
 		m=len(dataSet)
 		yHat=np.zeros((m,1))
@@ -103,6 +115,18 @@ class RandomForest():
 			trainingSet_=self.bootStrapping(trainingSet,m)
 			dt=Decision_Tree()
 			tree=dt.createTree(trainingSet_)
+			RF.append(tree)
+			RFDS.append(dt)
+		return RF,RFDS
+
+	def createPruneForest(self,trainingSet,T):
+		m=len(trainingSet)
+		RF=[]
+		RFDS=[]
+		for i in range(T):
+			trainingSet_=self.bootStrapping(trainingSet,m)
+			dt=Decision_Tree()
+			tree=dt.createPruneTree(trainingSet_)
 			RF.append(tree)
 			RFDS.append(dt)
 		return RF,RFDS
@@ -147,14 +171,23 @@ def RFevarageError(trainingSet,testingSet,iteration):
 		errorOutG+=tmpErrorOutG
 	return errorg/iteration,errorG/iteration,errorOutG/iteration
 
-
-
-
+def RFevarageErrorByPrune(trainingSet,testingSet,iteration):
+	errorG=0
+	errorOutG=0
+	for i in range(iteration):
+		RF=RandomForest()
+		forest,forestDS=RF.createPruneForest(trainingSet,300)
+		errorIng,errorInG=RF.calError(trainingSet,forest,forestDS)
+		errorG+=errorInG
+		errorOutg,tmpErrorOutG=RF.calError(testingSet,forest,forestDS)
+		errorOutG+=tmpErrorOutG
+	return errorG/iteration,errorOutG/iteration
 
 def main():
 	dt=Decision_Tree()
 	trainingSet=dt.file2matrix('hw3_train.dat')
 	binTree=dt.createTree(trainingSet)
+
 	print("**************************************************************************")
 	print("第13题答案如下：")
 	print ('Number of Internal Nodes:'+str(dt.NumOfInternalNode))
@@ -174,8 +207,8 @@ def main():
 	print("**************************************************************************")
 	print()
 
-	# errorIng,errorInG,errorOutG=RFevarageError(trainingSet,testingSet,100)
-	errorIng,errorInG,errorOutG=RFevarageError(trainingSet,testingSet,1)
+	errorIng,errorInG,errorOutG=RFevarageError(trainingSet,testingSet,100)
+	# errorIng,errorInG,errorOutG=RFevarageError(trainingSet,testingSet,1)
 	print("**************************************************************************")
 	print("第16题答案如下：")
 	print ('average Ein(gt):'+str(errorIng))
@@ -194,6 +227,19 @@ def main():
 	print("**************************************************************************")
 	print()
 
+	# errorPruneInG,errorPruneOutG=RFevarageErrorByPrune(trainingSet,testingSet,1)
+	errorPruneInG,errorPruneOutG=RFevarageErrorByPrune(trainingSet,testingSet,100)
+	print("**************************************************************************")
+	print("第19题答案如下：")
+	print ('average Ein(Grf):'+str(errorPruneInG))
+	print("**************************************************************************")
+	print()
+
+	print("**************************************************************************")
+	print("第20题答案如下：")
+	print ('average Eout(Grf):'+str(errorPruneOutG))
+	print("**************************************************************************")
+	print()
 	
 if __name__=="__main__":
 	main()
