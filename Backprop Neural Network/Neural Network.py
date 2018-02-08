@@ -1,3 +1,4 @@
+#没有进行500次重复实验（耗时较多，实验结果有一定随机性）
 import numpy as np
 
 class Neural_Network():
@@ -19,64 +20,73 @@ class Neural_Network():
 	def tanhOfDeriv(self,s):
 		return 1-self.tanh(s)**2
 
-	def inference(self,X,Y,W,M):
+	def inference(self,X,Y,W,level):
 		m=np.shape(X[0])[0]
-		S=[0]*3
-		S[1]=np.dot(X[0],W[0])
-		X[1][:,1:]=self.tanh(S[1])
-		S[2]=np.dot(X[1],W[1]).flatten()
-		X[2]=np.sum((Y-S[2])**2)/m
+		S=[0]*(level+2)
+		for i in range(1,level+2):
+			if i==level+1:   #最后一层
+				S[i]=np.dot(X[i-1],W[i-1])
+				X[i]=np.sum((Y-S[i])**2)/m
+			else:
+				S[i]=np.dot(X[i-1],W[i-1])
+				X[i][:,1:]=self.tanh(S[i])
 		return X,S
 
-	def backprop(self,X,Y,W,S,eta):
+	def backprop(self,X,Y,W,S,level,eta):
 		m=np.shape(X[0])[0]
-		Theta=[0]*3
-		Theta[2]=2*(S[2]-Y)
-		Theta[1]=np.array(np.mat(Theta[2]).T*np.mat(W[1][1:,:]).T)*self.tanhOfDeriv(S[1])
-		W[0]=W[0]-eta*np.array(np.mat(X[0]).T*np.mat(Theta[1]))/m
-		W[1]=W[1]-eta*np.array(np.mat(X[1]).T*np.mat(Theta[2]).T)/m
+		Theta=[0]*(level+2)
+		Theta[level+1]=2*(S[level+1]-Y)
+		for i in range(level,0,-1):
+			Theta[i]=np.array(np.mat(Theta[i+1])*np.mat(W[i][1:,:]).T)*self.tanhOfDeriv(S[i])
+		for i in range(level+1):
+			W[i]-=eta*np.array(np.mat(X[i]).T*np.mat(Theta[i+1]))/m
 		return W
 
-	def train(self,dataSet,M,r,eta,T=50000):
+	def train(self,dataSet,level,M,r,eta,T=50000): #level 隐藏层层数 
 		Y=dataSet[:,-1]
-		X,W=self.construct(dataSet,M,r)
+		Y=np.array(np.mat(Y).T)
+		X,W=self.construct(dataSet,level,M,r)
 		for i in range(T):
-			X,S=self.inference(X,Y,W,M)
-			W=self.backprop(X,Y,W,S,eta)
+			X,S=self.inference(X,Y,W,level)
+			W=self.backprop(X,Y,W,S,level,eta)
 		return W
 
-	def validation(self,dataSet,W,M):
+	def validation(self,dataSet,W,level,M):
 		m,n=np.shape(dataSet)
 		Y=dataSet[:,-1]
-		X=[0]*3
-		x0=dataSet[:,:-1].copy()
-		one=np.ones(m)
-		X[0]=np.insert(x0,0,values=one,axis=1)
-		X[1]=np.ones((m,M+1))		
-		X,S=self.inference(X,Y,W,M)
-		return np.sum(np.sign(S[2])!=Y)/m
+		Y=np.array(np.mat(Y).T)
+		X=self.construct(dataSet,level,M,1)[0]	
+		X,S=self.inference(X,Y,W,level)
+		return np.sum(np.sign(S[level+1])!=Y)/m
 
-	def construct(self,dataSet,M,r):
+	def construct(self,dataSet,level,M,r):
 		m,n=np.shape(dataSet)
-		X=[0]*3
-		W=[0]*2
+		X=[0]*(level+2)
+		W=[0]*(level+1)
 		x0=dataSet[:,:-1].copy()
 		one=np.ones(m)
-		X[0]=np.insert(x0,0,values=one,axis=1)
-		X[1]=np.ones((m,M+1))
-		W[0]=np.random.uniform(-r,r,size=[n,M])
-		W[1]=np.random.uniform(-r,r,size=[M+1,1])
+		for i in range(level+1):
+			if i==0:
+				X[i]=np.insert(x0,0,values=one,axis=1)
+				W[i]=np.random.uniform(-r,r,size=[n,M[i]])
+			elif i==level:
+				X[i]=np.ones((m,M[i-1]+1))	
+				W[i]=np.random.uniform(-r,r,size=[M[i-1]+1,1])
+			else:
+				X[i]=np.ones((m,M[i-1]+1))
+				W[i]=np.random.uniform(-r,r,size=[M[i-1]+1,M[i]])
 		return X,W
 
 def getBestM(trainingSet,testingSet,nn):
+	level=1
 	r=0.1
 	eta=0.1
-	M=[1,6,11,16,21]
+	M=[[1],[6],[11],[16],[21]]
 	minEout=100
 	bestM=0
 	for m in M:
-		W=nn.train(trainingSet,m,r,eta,50000)	
-		Eout=nn.validation(testingSet,W,m)
+		W=nn.train(trainingSet,level,m,r,eta)	
+		Eout=nn.validation(testingSet,W,level,m)
 		print("M="+str(m)+" and "+"the 0/1 error is:"+str(Eout))
 		if Eout<minEout:
 			minEout=Eout
@@ -84,20 +94,21 @@ def getBestM(trainingSet,testingSet,nn):
 	print()
 	print("**************************************************************************")
 	print("第11题答案如下：")
-	print ('M:'+str(bestM)+' results in the lowest 0/1 Eout:')
+	print ('M:'+str(bestM[0])+' results in the lowest 0/1 Eout:')
 	print("**************************************************************************")
 	print()
 
 
 def getBestR(trainingSet,testingSet,nn):
-	M=3
+	M=[3]
+	level=1
 	eta=0.1
 	R=[0,0.001,0.1,10,1000]
 	minEout=100
 	bestR=0
 	for r in R:
-		W=nn.train(trainingSet,M,r,eta,50000)	
-		Eout=nn.validation(testingSet,W,M)
+		W=nn.train(trainingSet,level,M,r,eta)	
+		Eout=nn.validation(testingSet,W,level,M)
 		print("r="+str(r)+" and "+"the 0/1 error is:"+str(Eout))
 		if Eout<minEout:
 			minEout=Eout
@@ -109,16 +120,16 @@ def getBestR(trainingSet,testingSet,nn):
 	print("**************************************************************************")
 	print()
 
-
 def getBestEta(trainingSet,testingSet,nn):
-	M=3
+	M=[3]
+	level=1
 	r=0.1
 	Eta=[0.001,0.01,0.1,1,10]
 	minEout=100
 	bestEta=0
 	for eta in Eta:
-		W=nn.train(trainingSet,M,r,eta,50000)	
-		Eout=nn.validation(testingSet,W,M)
+		W=nn.train(trainingSet,level,M,r,eta)	
+		Eout=nn.validation(testingSet,W,level,M)
 		print("eta="+str(eta)+" and "+"the 0/1 error is:"+str(Eout))
 		if Eout<minEout:
 			minEout=Eout
@@ -128,8 +139,7 @@ def getBestEta(trainingSet,testingSet,nn):
 	print("第13题答案如下：")
 	print ('eta:'+str(bestEta)+' results in the lowest 0/1 Eout')
 	print("**************************************************************************")
-	print()
-
+	print()	
 
 def main():
 	nn=Neural_Network()
@@ -138,9 +148,15 @@ def main():
 	getBestM(trainingSet,testingSet,nn)
 	getBestR(trainingSet,testingSet,nn)
 	getBestEta(trainingSet,testingSet,nn)
-	
 
-
+	W=nn.train(trainingSet,2,[8,3],0.1,0.01)
+	Eout=nn.validation(testingSet,W,2,[8,3])
+	print()
+	print("**************************************************************************")
+	print("第14题答案如下：")
+	print ('Eout with d-8-3-1 neural network is:'+str(Eout))
+	print("**************************************************************************")
+	print()	
 
 if __name__=='__main__':
 	main()
