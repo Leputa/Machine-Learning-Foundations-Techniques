@@ -126,7 +126,7 @@ def getBestEta(trainingSet,testingSet,nn):
 	print()
 	print("**************************************************************************")
 	print("第13题答案如下：")
-	print ('r:'+str(bestEta)+' results in the lowest 0/1 Eout')
+	print ('eta:'+str(bestEta)+' results in the lowest 0/1 Eout')
 	print("**************************************************************************")
 	print()
 
