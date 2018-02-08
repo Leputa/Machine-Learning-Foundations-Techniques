@@ -25,6 +25,7 @@ class Support_Vector_Machine():
 		model=svm.SVC(C=C,kernel='linear')
 		X=trainingSet[:,1:]
 		y=trainingSet[:,:1].flatten()
+		print(y)
 		model.fit(X,y)
 		w=model.coef_[0]
 		return np.sqrt(np.sum(np.square(w)))
